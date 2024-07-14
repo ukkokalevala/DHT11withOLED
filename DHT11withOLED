@@ -1,0 +1,77 @@
+#include <Arduino.h>
+#include <DHT.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+// OLED display width and height
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+
+// Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
+#define OLED_RESET    -1 // Reset pin # (or -1 if sharing Arduino reset pin)
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+// DHT sensor
+#define DHTPIN 2     // D4 on the board is GPIO2
+#define DHTTYPE DHT11
+DHT dht(DHTPIN, DHTTYPE);
+
+void setup() {
+  Serial.begin(115200);
+  delay(10);
+
+  // Initialize the OLED display
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    Serial.println(F("SSD1306 allocation failed"));
+    for (;;); // Don't proceed, loop forever
+  }
+  display.display();
+  delay(2000); // Pause for 2 seconds
+
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+
+  // Initialize the DHT sensor
+  dht.begin();
+}
+
+void loop() {
+  delay(2000);
+
+  // Get temperature and humidity values
+  float temperature = dht.readTemperature();
+  float humidity = dht.readHumidity();
+
+  // Check if any reads failed and exit early (to try again).
+  if (isnan(temperature) || isnan(humidity)) {
+    Serial.println(F("Failed to read from DHT sensor!"));
+    return;
+  }
+
+  // Display values on the OLED
+  display.clearDisplay();
+  
+  // Display Temperature
+  display.setTextSize(2); // Increase text size
+  display.setCursor(0, 0);
+  display.print(F("Temp: "));
+  display.print(temperature);
+  display.print(F(" C"));
+  
+  // Display Humidity
+  display.setCursor(0, 20);
+  display.print(F("Humidity: "));
+  display.print(humidity);
+  display.print(F(" %"));
+  
+  display.display();
+
+  // Print values to the Serial Monitor (optional)
+  Serial.print(F("Temperature: "));
+  Serial.print(temperature);
+  Serial.print(F(" *C, Humidity: "));
+  Serial.print(humidity);
+  Serial.println(F(" %"));
+}
